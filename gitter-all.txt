@@ -15303,7 +15303,7 @@ hardlianotion
 @hardlianotion
 Oct 01 17:35
 Going back to the arrayUpdate example, my solution is
-def arrayUpdate2[A](arr: Array[A], i: Int, f: A => A): Try[Array[A]] = Try{arr.updat ed(i, f(arr(i)))}
+def arrayUpdate2[A](arr: Array[A], i: Int, f: A => A): Try[Array[A]] = Try{arr.updated(i, f(arr(i)))}
 but it has error
 type mismatch; [error] found : scala.collection.mutable.ArraySeq[A] [error] required: Array[A] [error] Try{arr.updated(i, f(arr(i)))} [error] ^
 Does anyone know what is going on
@@ -15320,7 +15320,12 @@ I don't want to map to Unit
 Ahmad Ragab
 @ASRagab
 Oct 01 17:46
-@hardlianotion I think what is happening is that updated is a method on the SeqLike trait, not on array and so when the implicit CanBuildFrom tries to recover the type, it doesn't "see" that the original collection was was Array[A]
+
+@hardlianotion I think what is happening is that updated is a method
+on the SeqLike trait, not on array and so when the implicit
+CanBuildFrom tries to recover the type, it doesn't "see" that the
+original collection was was Array[A]
+
 Phong Nguyen
 @phongngtuan
 Oct 01 17:46

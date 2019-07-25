@@ -67,3 +67,14 @@ sourceGenerators in Test += Def.task {
   IO.write(file, """object amm extends App { ammonite.Main().run() }""")
   Seq(file)
 }.taskValue
+
+(fullClasspath in Test) ++= {
+  (updateClassifiers in Test).value
+    .configurations
+    .find(_.configuration == Test.name)
+    .get
+    .modules
+    .flatMap(_.artifacts)
+    .collect{case (a, f) if a.classifier == Some("sources") => f}
+}
+

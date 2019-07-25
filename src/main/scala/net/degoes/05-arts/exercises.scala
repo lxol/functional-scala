@@ -12,16 +12,16 @@ object exercises {
 
       final def flatMap[B](f: A => Free[F, B]): Free[F, B] = Free.FlatMap(self, f)
 
-      final def <* [B](that: Free[F, B]): Free[F, A] =
+      final def <*[B](that: Free[F, B]): Free[F, A] =
         self.flatMap(a => that.map(_ => a))
 
-      final def *> [B](that: Free[F, B]): Free[F, B] =
+      final def *>[B](that: Free[F, B]): Free[F, B] =
         self.flatMap(_ => that)
 
       final def fold[G[_]: Monad](interpreter: F ~> G): G[A] =
         self match {
-          case Free.Return(value0)  => value0().point[G]
-          case Free.Effect(fa)      => interpreter(fa)
+          case Free.Return(value0) => value0().point[G]
+          case Free.Effect(fa) => interpreter(fa)
           case Free.FlatMap(fa0, f) => fa0.fold(interpreter).flatMap(a0 => f(a0).fold(interpreter))
         }
     }
@@ -45,9 +45,9 @@ object exercises {
 
     val program: Free[ConsoleF, String] =
       for {
-        _    <- printLine("Good morning! What is your name?")
+        _ <- printLine("Good morning! What is your name?")
         name <- readLine
-        _    <- printLine("Good to meet you, " + name + "!")
+        _ <- printLine("Good to meet you, " + name + "!")
       } yield name
 
     import scalaz.zio.IO
@@ -90,7 +90,7 @@ object exercises {
               for {
                 data <- State.get[TestData]
                 line = data.input.head
-                _    <- State.set(data.copy(input = data.input.drop(1)))
+                _ <- State.set(data.copy(input = data.input.drop(1)))
               } yield line
 
             case PrintLine(line) =>
@@ -103,28 +103,28 @@ object exercises {
 
   object design {
     /**
-    Loyalty Points Management
-
-    - Entities - Data
-      - Customer
-      - Loyalty Points
-      - Loyalty Point Account
-      - Loyalty Points Issuer - places you can get points from
-      - Loyalty Points Receiver - places you can spend points
-      - Notification
-      - Loyalty Point Offers
-      - Email ?
-      - Tiers ?
-
-    - Services - Functions / Operations
-      - Customer performs some action to earn loyalty points from an issuer
-      - Customer spends loyalty points at a receiver
-      - Customer transfers loyalty points to another account
-      - Customer sees account details including loyalty point balance
-      - Customer opens / closes loyalty point account
-      - Customer signs up / opt-ins for loyalty point offers
-      - Notifications & transactional email
-    */
+     * Loyalty Points Management
+     *
+     * - Entities - Data
+     * - Customer
+     * - Loyalty Points
+     * - Loyalty Point Account
+     * - Loyalty Points Issuer - places you can get points from
+     * - Loyalty Points Receiver - places you can spend points
+     * - Notification
+     * - Loyalty Point Offers
+     * - Email ?
+     * - Tiers ?
+     *
+     * - Services - Functions / Operations
+     * - Customer performs some action to earn loyalty points from an issuer
+     * - Customer spends loyalty points at a receiver
+     * - Customer transfers loyalty points to another account
+     * - Customer sees account details including loyalty point balance
+     * - Customer opens / closes loyalty point account
+     * - Customer signs up / opt-ins for loyalty point offers
+     * - Notifications & transactional email
+     */
     import scalaz.zio._
 
     sealed abstract class DatabaseError extends Exception
@@ -146,48 +146,47 @@ object exercises {
       def apply[A](implicit N: Number[A]): Number[A] = N
     }
     implicit class NumberSyntax[A](l: A) {
-      def + (r: A)(implicit N: Number[A]): A = N.plus(l, r)
-      def - (r: A)(implicit N: Number[A]): A = N.minus(l, r)
-      def * (r: A)(implicit N: Number[A]): A = N.times(l, r)
+      def +(r: A)(implicit N: Number[A]): A = N.plus(l, r)
+      def -(r: A)(implicit N: Number[A]): A = N.minus(l, r)
+      def *(r: A)(implicit N: Number[A]): A = N.times(l, r)
     }
 
     final case class Customer[AccountID, Num](
-      name    : String,
-      email   : String,
-      account : Account[AccountID, Num]
-    )
+      name: String,
+      email: String,
+      account: Account[AccountID, Num])
 
     final case class Account[AccountID, Num](
-      id    : AccountID,
-      txns  : DatabaseSource[Transaction[AccountID, Num]])
+      id: AccountID,
+      txns: DatabaseSource[Transaction[AccountID, Num]])
 
     object Account {
       import Transaction._
       type TxnDerived[A, B] = DatabaseDerived[Transaction[A, B], B]
 
-      def balance[A, B: Number] : TxnDerived[A, B] =
+      def balance[A, B: Number]: TxnDerived[A, B] =
         _.fold[B](Number[B].zero) {
-          case (balance, Redeem  (v, _)) => balance - v
-          case (balance, Earn    (v, _)) => balance + v
+          case (balance, Redeem(v, _)) => balance - v
+          case (balance, Earn(v, _)) => balance + v
           case (balance, Transfer(v, _)) => balance - v
         }
-      def status[A, B] : TxnDerived[A, Status] =
+      def status[A, B]: TxnDerived[A, Status] =
         _.fold[Status](Status.Open) {
           case (status, _) => status
         }
 
-      def tier[A, B: Number: Order](tiers: Map[B, Tier]) : TxnDerived[A, B] =
+      def tier[A, B: Number: Order](tiers: Map[B, Tier]): TxnDerived[A, B] =
         ???
 
       sealed trait Status
       object Status {
-        case object Open   extends Status
+        case object Open extends Status
         case object Closed extends Status
       }
       sealed trait Tier
       object Tier {
-        case object Silver   extends Tier
-        case object Gold     extends Tier
+        case object Silver extends Tier
+        case object Gold extends Tier
         case object Platinum extends Tier
       }
     }
@@ -196,9 +195,9 @@ object exercises {
 
     sealed trait Transaction[+AccountID, +Num]
     object Transaction {
-      final case class Redeem   [           Num](amount: Num, reward   : Reward   ) extends Transaction[Nothing  , Num]
-      final case class Earn     [           Num](amount: Num, purchase : Purchase ) extends Transaction[Nothing  , Num]
-      final case class Transfer [AccountID, Num](amount: Num, recipient: AccountID) extends Transaction[AccountID, Num]
+      final case class Redeem[Num](amount: Num, reward: Reward) extends Transaction[Nothing, Num]
+      final case class Earn[Num](amount: Num, purchase: Purchase) extends Transaction[Nothing, Num]
+      final case class Transfer[AccountID, Num](amount: Num, recipient: AccountID) extends Transaction[AccountID, Num]
     }
 
     trait Confirmation
@@ -249,9 +248,9 @@ object exercises {
 
           final def zip[B](that: Statement[B]): Statement[(A, B)] = zipWith(that)(_ -> _)
 
-          final def *> [B](that: Statement[B]): Statement[B] = self.zip(that).map(_._2)
+          final def *>[B](that: Statement[B]): Statement[B] = self.zip(that).map(_._2)
 
-          final def <* [B](that: Statement[B]): Statement[A] = self.zip(that).map(_._1)
+          final def <*[B](that: Statement[B]): Statement[A] = self.zip(that).map(_._1)
 
           final def ifThenElse[B](f: A => Boolean)(ifTrue: Statement[B], ifFalse: Statement[B]): Statement[B] =
             IfThenElse(self, f, ifTrue, ifFalse)
@@ -262,9 +261,9 @@ object exercises {
         final case class Return[A](value: A) extends Statement[A]
         final case class ZipWith[A, B, C](l: Statement[A], r: Statement[B], f: (A, B) => C) extends Statement[C]
         final case class IfThenElse[A, B](statement: Statement[A], f: A => Boolean, ifTrue: Statement[B], ifFalse: Statement[B]) extends Statement[B]
-        final case class Earn(accountID: UUID, points: Long, purchase: Purchase) extends Statement[Either[LoyaltyError,Confirmation]]
-        final case class Redeem(accountID: UUID, points: Long, reward: Reward) extends Statement[Either[LoyaltyError,Confirmation]]
-        final case class Transfer(sourceAccountID: UUID, transferAccountID: UUID, points: Long) extends Statement[Either[LoyaltyError,Confirmation]]
+        final case class Earn(accountID: UUID, points: Long, purchase: Purchase) extends Statement[Either[LoyaltyError, Confirmation]]
+        final case class Redeem(accountID: UUID, points: Long, reward: Reward) extends Statement[Either[LoyaltyError, Confirmation]]
+        final case class Transfer(sourceAccountID: UUID, transferAccountID: UUID, points: Long) extends Statement[Either[LoyaltyError, Confirmation]]
         final case class Balance(accountID: UUID) extends Statement[Long]
 
         implicit val LoyaltyTransactionsInstance: LoyaltyTransactions[Statement] with Applicative[Statement] =
@@ -272,11 +271,11 @@ object exercises {
             def point[A](a: => A): Statement[A] = Statement.point(a)
             def ap[A, B](fa: => Statement[A])(f: => Statement[A => B]): Statement[B] =
               f.zipWith(fa)((f, a) => f(a))
-            def earn(accountID: UUID, points: Long, purchase: Purchase): Statement[Either[LoyaltyError,Confirmation]] =
+            def earn(accountID: UUID, points: Long, purchase: Purchase): Statement[Either[LoyaltyError, Confirmation]] =
               Earn(accountID, points, purchase)
-            def redeem(accountID: UUID, points: Long, reward: Reward): Statement[Either[LoyaltyError,Confirmation]] =
+            def redeem(accountID: UUID, points: Long, reward: Reward): Statement[Either[LoyaltyError, Confirmation]] =
               Redeem(accountID, points, reward)
-            def transfer(sourceAccountID: UUID, transferAccountID: UUID, points: Long): Statement[Either[LoyaltyError,Confirmation]] =
+            def transfer(sourceAccountID: UUID, transferAccountID: UUID, points: Long): Statement[Either[LoyaltyError, Confirmation]] =
               Transfer(sourceAccountID, transferAccountID, points)
             def balance(accountID: UUID): Statement[Long] = Balance(accountID)
           }
@@ -287,7 +286,7 @@ object exercises {
         new LoyaltyProgram[IO[Exception, ?]] {
           import internal._
           import java.sql.ResultSet
-          import java.sql.{Statement => JStatement}
+          import java.sql.{ Statement => JStatement }
 
           type Query = String
 
@@ -301,7 +300,7 @@ object exercises {
 
             val resultSet =
               IO.syncException(jstatement.executeBatch()) *>
-              IO.syncException(jstatement.getResultSet())
+                IO.syncException(jstatement.getResultSet())
 
             resultSet.flatMap(processor)
           }
@@ -420,10 +419,8 @@ object exercises {
         obj(Map(
           "address" -> obj(Map(
             "number" -> str("221B"),
-            "street" -> str("Baker Street")
-          )),
-          "name" -> str("Sherlock Holmes")
-        ))
+            "street" -> str("Baker Street"))),
+          "name" -> str("Sherlock Holmes")))
 
       def renameField(old: String, newf: String): JsonF[Fix[JsonF]] => JsonF[Fix[JsonF]] =
         _ match {
@@ -445,8 +442,8 @@ object exercises {
           case Obj(map) => map.keys.toList ++ map.values.toList.flatten
         }
 
-      val transformed : Json = Example.transformDown(renameField("street", "street_name"))
-      val fields : List[String] = Example.cata(collectFields)
+      val transformed: Json = Example.transformDown(renameField("street", "street_name"))
+      val fields: List[String] = Example.cata(collectFields)
     }
   }
 
@@ -456,16 +453,16 @@ object exercises {
 
       final def map[B](f: A => B): Parser[E, B] = Map[E, A, B](self, f)
 
-      final def || [E1 >: E, B](that: Parser[E1, B]): Parser[E1, Either[A, B]] =
+      final def ||[E1 >: E, B](that: Parser[E1, B]): Parser[E1, Either[A, B]] =
         Alternative(self, that)
 
       final def * : Parser[E, List[A]] = Repeat(self)
 
-      final def ~ [E1 >: E, B](that: Parser[E1, B]): Parser[E1, (A, B)] = Zip(self, that)
+      final def ~[E1 >: E, B](that: Parser[E1, B]): Parser[E1, (A, B)] = Zip(self, that)
 
-      final def <~ [E1 >: E, B](that: Parser[E1, B]): Parser[E1, A] = (self ~ that).map(_._1)
+      final def <~[E1 >: E, B](that: Parser[E1, B]): Parser[E1, A] = (self ~ that).map(_._1)
 
-      final def ~> [E1 >: E, B](that: Parser[E1, B]): Parser[E1, B] = (self ~ that).map(_._2)
+      final def ~>[E1 >: E, B](that: Parser[E1, B]): Parser[E1, B] = (self ~ that).map(_._2)
     }
     object Parser {
       def fail[E](e: E): Parser[E, Nothing] = Fail(e)
@@ -488,8 +485,8 @@ object exercises {
 
       implicit def ApplicativeParser[E]: Applicative[Parser[E, ?]] =
         new Applicative[Parser[E, ?]] {
-          def point[A](a: => A): Parser[E,A] = Succeed(a)
-          def ap[A, B](fa: => Parser[E,A])(f: => Parser[E,A => B]): Parser[E,B] =
+          def point[A](a: => A): Parser[E, A] = Succeed(a)
+          def ap[A, B](fa: => Parser[E, A])(f: => Parser[E, A => B]): Parser[E, B] =
             Map[E, (A => B, A), B](Zip(f, fa), t => t._1(t._2))
         }
     }
@@ -525,9 +522,9 @@ object exercises {
         def apply[A: Dsl] = implicitly[Dsl[A]]
       }
       implicit class DslSyntax[A](l: A) {
-        def + (r: A)(implicit A: Dsl[A]): A = A.plus(l, r)
-        def - (r: A)(implicit A: Dsl[A]): A = A.minus(l, r)
-        def * (r: A)(implicit A: Dsl[A]): A = A.times(l, r)
+        def +(r: A)(implicit A: Dsl[A]): A = A.plus(l, r)
+        def -(r: A)(implicit A: Dsl[A]): A = A.minus(l, r)
+        def *(r: A)(implicit A: Dsl[A]): A = A.times(l, r)
       }
       def int[A: Dsl](v: Int) = Dsl[A].int(v)
       def value[A: Dsl](s: String) = Dsl[A].value(s)
@@ -536,10 +533,8 @@ object exercises {
 
       def program[A: Dsl]: A =
         let(
-          "a", int(1)
-        )(
-          value("a") * value("a")
-        )
+          "a", int(1))(
+            value("a") * value("a"))
     }
     object foas2 {
       // Problem 1: Reference values that have not been declared
@@ -555,9 +550,9 @@ object exercises {
         def apply[F[_]: Dsl] = implicitly[Dsl[F]]
       }
       implicit class DslIntSyntax[F[_]](l: F[Int]) {
-        def + (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.plus(l, r)
-        def - (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.minus(l, r)
-        def * (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.times(l, r)
+        def +(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.plus(l, r)
+        def -(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.minus(l, r)
+        def *(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.times(l, r)
       }
       def int[F[_]: Dsl](v: Int): F[Int] = Dsl[F].int(v)
       def value[F[_]: Dsl](s: String) = Dsl[F].value(s)
@@ -566,10 +561,9 @@ object exercises {
 
       def program[F[_]: Dsl]: F[Int] =
         let(
-          "a", int(1)
-        )(
-          value("asdf") * value("a") // Uh oh!!!!!!!!!!
-        )
+          "a", int(1))(
+            value("asdf") * value("a") // Uh oh!!!!!!!!!!
+          )
     }
 
     object hoas {
@@ -599,14 +593,14 @@ object exercises {
               l.seqWith(r)(_ * _)
             def let[A, B](value: IO[E, A], body: IO[E, A] => IO[E, B]): IO[E, B] =
               value.flatMap(a => body(IO.now(a)))
-            def ap[A, B](f: IO[E, A => B], a: IO[E, A]): IO[E,B] = f.seqWith(a)((f, a) => f(a))
-            def lam[A, B](v: IO[E, A] => IO[E, B]): IO[E,A => B] = ???
+            def ap[A, B](f: IO[E, A => B], a: IO[E, A]): IO[E, B] = f.seqWith(a)((f, a) => f(a))
+            def lam[A, B](v: IO[E, A] => IO[E, B]): IO[E, A => B] = ???
           }
       }
       implicit class DslIntSyntax[F[_]](l: F[Int]) {
-        def + (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.plus(l, r)
-        def - (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.minus(l, r)
-        def * (r: F[Int])(implicit F: Dsl[F]): F[Int] = F.times(l, r)
+        def +(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.plus(l, r)
+        def -(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.minus(l, r)
+        def *(r: F[Int])(implicit F: Dsl[F]): F[Int] = F.times(l, r)
       }
       implicit class DslLambdaSyntax[F[_], A, B](f: F[A => B]) {
         def apply(a: F[A])(implicit F: Dsl[F]): F[B] = F.ap(f, a)
@@ -621,9 +615,7 @@ object exercises {
       def program[F[_]: Dsl]: F[Int] =
         let(int(1))(a =>
           let(int(10))(b =>
-            a * a + b * b
-          )
-        )
+            a * a + b * b))
 
       def program2[F[_]: Dsl]: F[Int] =
         lam((e: F[Int]) => e * e).apply(int(2))

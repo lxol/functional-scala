@@ -10,43 +10,43 @@ object types {
   //
   // List all values of the type `Unit`.
   //
-  val UnitValues: Set[Unit] = ???
+  val UnitValues: Set[Unit] = Set(())
 
   //
   // EXERCISE 2
   //
   // List all values of the type `Nothing`.
   //
-  val NothingValues: Set[Nothing] = ???
+  val NothingValues: Set[Nothing] = Set()
 
   //
   // EXERCISE 3
   //
   // List all values of the type `Boolean`.
   //
-  val BoolValues: Set[Boolean] = ???
+  val BoolValues: Set[Boolean] = Set(true, false)
 
   //
   // EXERCISE 4
   //
   // List all values of the type `Either[Unit, Boolean]`.
   //
-  val EitherUnitBoolValues: Set[Either[Unit, Boolean]] = ???
+  val EitherUnitBoolValues: Set[Either[Unit, Boolean]] = Set(Left(()), Right(true), Right(false))
 
   //
   // EXERCISE 5
   //
   // List all values of the type `(Boolean, Boolean)`.
   //
-  val TupleBoolBoolValues: Set[(Boolean, Boolean)] =
-    ???
+  val TupleBoolBoolValues: Set[(Boolean, Boolean)] = Set((true, true), (true, false), (false, true), (false, false))
 
   //
   // EXERCISE 6
   //
   // List all values of the type `Either[Either[Unit, Unit], Unit]`.
   //
-  val EitherEitherUnitUnitUnitValues: Set[Either[Either[Unit, Unit], Unit]] = ???
+  val EitherEitherUnitUnitUnitValues: Set[Either[Either[Unit, Unit], Unit]] =
+    Set(Left(Left(())), Left(Right(())), Right(()))
 
   //
   // EXERCISE 7
@@ -54,7 +54,8 @@ object types {
   // Create a product type of `Int` and `String`, representing the age and
   // name of a person.
   //
-  type Person = ???
+  // type Person = (Int, String)
+  case class Person(name: String, age: Int)
 
   //
   // EXERCISE 8
@@ -62,8 +63,10 @@ object types {
   // Prove that `A * 1` is equivalent to `A` by implementing the following two
   // functions.
   //
-  def to1[A](t: (A, Unit)): A = ???
-  def from1[A](a: A): (A, Unit) = ???
+  def to1[A](t: (A, Unit)): A = t._1
+  def from1[A](a: A): (A, Unit) = (a, ())
+
+  // assert(to1(from1(2)) == 3 )
 
   //
   // EXERCISE 9
@@ -80,7 +83,7 @@ object types {
   // Create a sum type of `Int` and `String` representing the identifier of
   // a robot (a number) or a person (a name).
   //
-  type Identifier = ???
+  type Identifier = Either[Int, String]
 
   //
   // EXERCISE 11
@@ -88,8 +91,12 @@ object types {
   // Prove that `A + 0` is equivalent to `A` by implementing the following two
   // functions.
   //
-  def to3[A](t: Either[A, Nothing]): A = ???
-  def from3[A](a: A): Either[A, Nothing] = ???
+  def to3[A](t: Either[A, Nothing]): A =
+    t match {
+      case Left(a) => a
+      case Right(n) => n
+    }
+  def from3[A](a: A): Either[A, Nothing] = Left(a)
 
   //
   // EXERCISE 12
@@ -97,7 +104,12 @@ object types {
   // Create either a sum type or a product type (as appropriate) to represent a
   // credit card, which has a number, an expiration date, and a security code.
   //
-  type CreditCard = ???
+  // type CreditCard = ???
+  import java.time.LocalDateTime
+  // import scala.reflect.{ ClassTag, ClassTag }
+  type CreditCardNumber
+  type SecurityCode
+  case class CreditCard(number: CreditCardNumber, expirationDate: LocalDateTime, securityCode: SecurityCode)
 
   //
   // EXERCISE 13
@@ -106,7 +118,14 @@ object types {
   // payment method, which could be a credit card, bank account, or
   // cryptocurrency.
   //
-  type PaymentMethod = ???
+  // type PaymentMethod = ???
+
+  sealed trait PaymentMethod
+  object PaymentMethod {
+    object CreditCardMethod extends PaymentMethod
+    object BankAccountMethod extends PaymentMethod
+    object CryptocurrencyMethod extends PaymentMethod
+  }
 
   //
   // EXERCISE 14
@@ -114,7 +133,12 @@ object types {
   // Create either a sum type or a product type (as appropriate) to represent an
   // employee at a company, which has a title, salary, name, and employment date.
   //
-  type Employee = ???
+  type Salary
+  type EmployerTitle
+  type EmployeeName
+  type EmploymentDate
+  case class Employee1(salary: Salary, title: EmployerTitle, name: EmployeeName, startDate: EmploymentDate)
+  type Employee = Employee1
 
   //
   // EXERCISE 15
@@ -123,7 +147,16 @@ object types {
   // piece on a chess board, which could be a pawn, rook, bishop, knight,
   // queen, or king.
   //
-  type ChessPiece = ???
+
+  sealed trait ChessPiece1
+  object ChessPiece1 {
+    case object Pawn extends ChessPiece1
+    case object Rook extends ChessPiece1
+    case object Bishop extends ChessPiece1
+    case object Knight extends ChessPiece1
+  }
+
+  type ChessPiece = ChessPiece1
 
   //
   // EXERCISE 16
@@ -131,69 +164,136 @@ object types {
   // Create an ADT model of a game world, including a map, a player, non-player
   // characters, different classes of items, and character stats.
   //
+  /// John De Goes solution:
+  // case class GameWorld(
+  //     map     : GameMap,
+  //     player  : Character,
+  //     time    : Time)
+
+  //   case class Character(
+  //     name      : String,
+  //     charClass : CharClass,
+  //     position  : Cell,
+  //     stats     : Stats,
+  //     inventory : List[Item])
+
+  //   case class Cell(
+  //     name        : String,
+  //     items       : List[Item],
+  //     characters  : List[Character])
+
+  //   case class GameMap(
+  //     cells   : Set[Cell],
+  //     routes  : Map[Cell, Set[Cell]])
+
+  //   case class Stats(health: Int, stamina: Int)
+
+  //   sealed trait CharClass
+  //   object CharClass {
+  //     case object Witch   extends CharClass
+  //     case object Warlock extends CharClass
+  //     case object Wizard  extends CharClass
+  //     case object Human   extends CharClass
+  //     case object Orc     extends CharClass
+  //     case object Elf     extends CharClass
+  //     case object Dwarf   extends CharClass
+  // }
   type GameWorld = ???
+  type Player
+  type GameMap = (Int, Int)
+  sealed trait NonPlayer
+
 }
 
 object functions {
   type ??? = Nothing
+  type Foo = String
 
+  // 1. Every function is total
+  // for all x in the domain ,g f(x) is in the codomain
+  // 2. Determinism
+  // if x == y f(x) = f(y)
+  // 3. free of  side effect
+  //   the only effect of applying f to x is computing f(x)
   //
   // EXERCISE 1
   //
   // Convert the following non-function into a function.
   //
+  // violate Totality
   def parseInt1(s: String): Int = s.toInt
-  def parseInt2(s: String): ??? = ???
+  def parseInt2(s: String): Option[Int] = try {
+    Some(s.toInt)
+  } catch {
+    case _: Exception => None
+  }
+  import scala.util.Try
+  def parseInt3(s: String): Try[Int] = Try(s.toInt)
 
   //
   // EXERCISE 2
   //
   // Convert the following non-function into a function.
   //
-  def arrayUpdate1[A](arr: Array[A], i: Int, f: A => A): Unit =
-    arr.update(i, f(arr(i)))
-  def arrayUpdate2[A](arr: Array[A], i: Int, f: A => A): ??? = ???
+  // non-deterministic, totality
+  def arrayUpdate1[A](arr: Array[A], i: Int, f: A => A): Unit = ???
+  // arr.update(i, f(arr(i)))
+  import scala.util.Try
+  // import scala.reflect.ClassTag
+
+  // def arrayUpdate2[A: ClassTag](arr: Array[A], i: Int, f: A => A): Try[Array[A]] = Try { arr.updated(i, f(arr(i))).toArray }
+  // // def arrayUpdate2[A : ClassTag](arr: Array[A], i: Int, f: A => A):Try[Array[A]] = Try{
+  //   arr.updated(i, f(arr(i))).toArray
+  // }
+  //   Try {
+  //     arr.updated(i, f(arr(i))).toArray
+  //   }
 
   //
   // EXERCISE 3
   //
   // Convert the following non-function into a function.
-  //
+  // totality
   def divide1(a: Int, b: Int): Int = a / b
-  def divide2(a: Int, b: Int): ??? = ???
+  def divide2(a: Int, b: Int): Option[Int] = if (b == 0) None else Some(a / b)
 
   //
   // EXERCISE 4
   //
   // Convert the following non-function into a function.
-  //
+  // side effect
   var id = 0
   def freshId1(): Int = {
     val newId = id
     id += 1
     newId
   }
-  def freshId2(/* ??? */): (Int, Int) = ???
+  def freshId2(id: Int): (Int, Int) = (id, id + 1)
 
   //
   // EXERCISE 5
   //
   // Convert the following non-function into a function.
-  //
+  // non deterministic
   import java.time.LocalDateTime
   def afterOneHour1: LocalDateTime = LocalDateTime.now.plusHours(1)
-  def afterOneHour2(/* ??? */): LocalDateTime = ???
+  def afterOneHour2(time: LocalDateTime): LocalDateTime = time.plusHours(1)
 
   //
   // EXERCISE 6
   //
   // Convert the following non-function into function.
-  //
+  // side effect in the form of output to stdout
+  // totality - is not defined on an empty list
   def head1[A](as: List[A]): A = {
     if (as.length == 0) println("Oh no, it's impossible!!!")
     as.head
   }
-  def head2[A](as: List[A]): ??? = ???
+  def head2[A](as: List[A]): Either[String, A] =
+    if (as.length == 0)
+      Left("Oh no, it's impossible!!!")
+    else
+      Right(as.head)
 
   //
   // EXERCISE 7
@@ -212,8 +312,10 @@ object functions {
     processor.charge(account, coffee.price)
     coffee
   }
-  final case class Charge(/* ??? */)
-  def buyCoffee2(account: Account): (Coffee, Charge) = ???
+  final case class Charge(amount: Double)
+  def buyCoffee2(account: Account): (Coffee, Charge) = {
+    ???
+  }
 
   //
   // EXERCISE 8
@@ -286,7 +388,7 @@ object functions {
     def finish(): List[List[Boolean]] =
       canvas.map(_.toList).toList
   }
-  def draw2(size: Int /* ... */): ??? = ???
+  def draw2(size: Int /* ... */ ): ??? = ???
 }
 
 object higher_order {
@@ -336,8 +438,7 @@ object higher_order {
   // Implement the following higher-order function. After you implement
   // the function, interpret its meaning.
   //
-  def alt[E1, E2, A, B](l: Parser[E1, A], r: E1 => Parser[E2, B]):
-    Parser[E2, Either[A, B]] = ???
+  def alt[E1, E2, A, B](l: Parser[E1, A], r: E1 => Parser[E2, B]): Parser[E2, Either[A, B]] = ???
 
   case class Parser[+E, +A](
     run: String => Either[E, (String, A)])
@@ -416,8 +517,7 @@ object poly_functions {
   def groupBy1(
     l: List[String],
     by: String => String)(
-      reducer: (String, List[String]) => String):
-      Map[String, String] = ???
+    reducer: (String, List[String]) => String): Map[String, String] = ???
   // groupBy1(Data, By)(Reducer) == Expected
 
   //
@@ -593,7 +693,7 @@ object typeclasses {
       }
   }
   implicit class EqSyntax[A](val l: A) extends AnyVal {
-    def === (r: A)(implicit eq: Eq[A]): Boolean =
+    def ===(r: A)(implicit eq: Eq[A]): Boolean =
       eq.equals(l, r)
   }
 
@@ -628,25 +728,25 @@ object typeclasses {
     }
   }
   implicit class OrdSyntax[A](val l: A) extends AnyVal {
-    def =?= (r: A)(implicit A: Ord[A]): Ordering =
+    def =?=(r: A)(implicit A: Ord[A]): Ordering =
       A.compare(l, r)
 
-    def < (r: A)(implicit A: Ord[A]): Boolean =
+    def <(r: A)(implicit A: Ord[A]): Boolean =
       Eq[Ordering].equals(A.compare(l, r), LT)
 
-    def <= (r: A)(implicit A: Ord[A]): Boolean =
+    def <=(r: A)(implicit A: Ord[A]): Boolean =
       (l < r) || (this === r)
 
-    def > (r: A)(implicit A: Ord[A]): Boolean =
+    def >(r: A)(implicit A: Ord[A]): Boolean =
       Eq[Ordering].equals(A.compare(l, r), GT)
 
-    def >= (r: A)(implicit A: Ord[A]): Boolean =
+    def >=(r: A)(implicit A: Ord[A]): Boolean =
       (l > r) || (this === r)
 
-    def === (r: A)(implicit A: Ord[A]): Boolean =
+    def ===(r: A)(implicit A: Ord[A]): Boolean =
       Eq[Ordering].equals(A.compare(l, r), EQUAL)
 
-    def !== (r: A)(implicit A: Ord[A]): Boolean =
+    def !==(r: A)(implicit A: Ord[A]): Boolean =
       !Eq[Ordering].equals(A.compare(l, r), EQUAL)
   }
   case class Person(age: Int, name: String)

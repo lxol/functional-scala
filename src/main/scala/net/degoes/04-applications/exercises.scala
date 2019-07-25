@@ -20,10 +20,10 @@ object exercises extends App {
   // Implement the `crawlIO` function.
   //
   def crawlIO[E: Monoid, A: Monoid](
-    seeds     : Set[URL],
-    router    : URL => Set[URL],
-    processor : (URL, String) => IO[E, A]): IO[Nothing, Crawl[E, A]] =
-      ???
+    seeds: Set[URL],
+    router: URL => Set[URL],
+    processor: (URL, String) => IO[E, A]): IO[Nothing, Crawl[E, A]] =
+    ???
 
   //
   // EXERCISE 2
@@ -31,10 +31,10 @@ object exercises extends App {
   // Implement a version of the `crawlIO` function that works in parallel.
   //
   def crawlIOPar[E: Monoid, A: Monoid](
-    seeds     : Set[URL],
-    router    : URL => Set[URL],
-    processor : (URL, String) => IO[E, A]): IO[Nothing, Crawl[E, A]] =
-      ???
+    seeds: Set[URL],
+    router: URL => Set[URL],
+    processor: (URL, String) => IO[E, A]): IO[Nothing, Crawl[E, A]] =
+    ???
 
   //
   // EXERCISE 3
@@ -43,11 +43,11 @@ object exercises extends App {
   // to interact with the real world.
   //
   def crawlIO2[E: Monoid, A: Monoid](
-    seeds     : Set[URL],
-    router    : URL => Set[URL],
-    processor : (URL, String) => IO[E, A],
-    getURL    : URL => IO[Exception, String] = getURL(_)): IO[Nothing, Crawl[E, A]] =
-      ???
+    seeds: Set[URL],
+    router: URL => Set[URL],
+    processor: (URL, String) => IO[E, A],
+    getURL: URL => IO[Exception, String] = getURL(_)): IO[Nothing, Crawl[E, A]] =
+    ???
 
   //
   // EXERCISE 4
@@ -166,7 +166,7 @@ object exercises extends App {
   // read from the console), a log of output (that has been written to the
   // console), and a list of "random" numbers.
   //
-  case class TestData(/* ??? */ ) {
+  case class TestData( /* ??? */ ) {
     def renderOutput: String = ???
   }
 
@@ -181,13 +181,13 @@ object exercises extends App {
   final case class TestIO[+E, +A](run: IO[E, A])
   def createTestInstance[E](ref: Ref[TestData]): GameEffects[TestIO[E, ?]] =
     new Console[TestIO[E, ?]] with Random[TestIO[E, ?]] with Monad[TestIO[E, ?]] {
-      def point[A](a: => A): TestIO[E,A] = TestIO(IO.point(a))
-      def bind[A, B](fa: TestIO[E,A])(f: A => TestIO[E,B]): TestIO[E,B] =
+      def point[A](a: => A): TestIO[E, A] = TestIO(IO.point(a))
+      def bind[A, B](fa: TestIO[E, A])(f: A => TestIO[E, B]): TestIO[E, B] =
         TestIO(fa.run.flatMap(f.andThen(_.run)))
 
-      def printLine(line: String): TestIO[E,Unit] = ???
+      def printLine(line: String): TestIO[E, Unit] = ???
       def readLine: TestIO[E, String] = ???
-      def nextInt(max: Int): TestIO[E,Int] = ???
+      def nextInt(max: Int): TestIO[E, Int] = ???
     }
 
   //
@@ -198,11 +198,11 @@ object exercises extends App {
   //
   def testGame(data: TestData): IO[Nothing, TestData] =
     for {
-      ref   <- Ref(data)
-      _     <- ({
-                 ???
-               }: TestIO[Nothing, Unit]).run
-      data  <- ref.get
+      ref <- Ref(data)
+      _ <- ({
+        ???
+      }: TestIO[Nothing, Unit]).run
+      data <- ref.get
     } yield data
 
   //
@@ -210,9 +210,7 @@ object exercises extends App {
   //
   // Create some test data for a trial run of the game.
   //
-  val GameTest1 = testGame(TestData(
-    /* ??? */
-  )).map(_.renderOutput)
+  val GameTest1 = testGame(TestData( /* ??? */ )).map(_.renderOutput)
 
   final case class Crawl[E, A](error: E, value: A) {
     def leftMap[E2](f: E => E2): Crawl[E2, A] = Crawl(f(error), value)
@@ -220,7 +218,7 @@ object exercises extends App {
   }
   object Crawl {
     implicit def CrawlMonoid[E: Monoid, A: Monoid]: Monoid[Crawl[E, A]] =
-      new Monoid[Crawl[E, A]]{
+      new Monoid[Crawl[E, A]] {
         def zero: Crawl[E, A] = Crawl(mzero[E], mzero[A])
         def append(l: Crawl[E, A], r: => Crawl[E, A]): Crawl[E, A] =
           Crawl(l.error |+| r.error, l.value |+| r.value)
@@ -241,7 +239,7 @@ object exercises extends App {
     def url: String = parsed.toString
 
     override def equals(a: Any): Boolean = a match {
-      case that : URL => this.url == that.url
+      case that: URL => this.url == that.url
       case _ => false
     }
 
@@ -262,21 +260,20 @@ object exercises extends App {
 
   def getURL(url: URL): IO[Exception, String] =
     for {
-      promise <-  Promise.make[Exception, String]
-      _       <-  (for {
-                    exitResult <- IO.async[Nothing, ExitResult[Exception, String]](k => blockingPool.submit(
-                                    new Runnable () {
-                                      def run: Unit =
-                                        try {
-                                          k(ExitResult.Completed(ExitResult.Completed(scala.io.Source.fromURL(url.url)(scala.io.Codec.UTF8).mkString)))
-                                        } catch {
-                                          case e : Exception => k(ExitResult.Completed(ExitResult.Failed(e)))
-                                        }
-                                    }
-                                  )) : IO[Nothing, ExitResult[Exception, String]]
-                    _          <- promise.done(exitResult)
-                  } yield ()).fork
-      html    <-  promise.get
+      promise <- Promise.make[Exception, String]
+      _ <- (for {
+        exitResult <- IO.async[Nothing, ExitResult[Exception, String]](k => blockingPool.submit(
+          new Runnable() {
+            def run: Unit =
+              try {
+                k(ExitResult.Completed(ExitResult.Completed(scala.io.Source.fromURL(url.url)(scala.io.Codec.UTF8).mkString)))
+              } catch {
+                case e: Exception => k(ExitResult.Completed(ExitResult.Failed(e)))
+              }
+          })): IO[Nothing, ExitResult[Exception, String]]
+        _ <- promise.done(exitResult)
+      } yield ()).fork
+      html <- promise.get
     } yield html
 
   def extractURLs(root: URL, html: String): List[URL] = {
@@ -286,25 +283,24 @@ object exercises extends App {
       val matches = (for (m <- pattern.findAllMatchIn(html)) yield m.group(1)).toList
 
       for {
-        m   <- matches
+        m <- matches
         url <- URL(m).toList ++ root.relative(m).toList
       } yield url
     }).getOrElse(Nil)
   }
 
   object test {
-    val Home          = URL("http://scalaz.org").get
-    val Index         = URL("http://scalaz.org/index.html").get
+    val Home = URL("http://scalaz.org").get
+    val Index = URL("http://scalaz.org/index.html").get
     val ScaladocIndex = URL("http://scalaz.org/scaladoc/index.html").get
-    val About         = URL("http://scalaz.org/about").get
+    val About = URL("http://scalaz.org/about").get
 
     val SiteIndex =
       Map(
         Home -> """<html><body><a href="index.html">Home</a><a href="/scaladoc/index.html">Scaladocs</a></body></html>""",
         Index -> """<html><body><a href="index.html">Home</a><a href="/scaladoc/index.html">Scaladocs</a></body></html>""",
         ScaladocIndex -> """<html><body><a href="index.html">Home</a><a href="/about">About</a></body></html>""",
-        About -> """<html><body><a href="home.html">Home</a><a href="http://google.com">Google</a></body></html>"""
-      )
+        About -> """<html><body><a href="home.html">Home</a><a href="http://google.com">Google</a></body></html>""")
 
     val getURL: URL => IO[Exception, String] =
       (url: URL) => SiteIndex.get(url).fold[IO[Exception, String]](IO.fail(new Exception("Could not connect to: " + url)))(IO.now(_))
@@ -318,6 +314,6 @@ object exercises extends App {
 
   def run(args: List[String]): IO[Nothing, ExitStatus] =
     (for {
-      _     <-  putStrLn("Hello World!")
+      _ <- putStrLn("Hello World!")
     } yield ()).redeemPure(_ => ExitStatus.ExitNow(1), _ => ExitStatus.ExitNow(0))
 }

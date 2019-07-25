@@ -8,9 +8,9 @@ import scala.concurrent.duration._
 
 object zio_background {
   sealed trait Program[A] { self =>
-    final def *> [B](that: Program[B]): Program[B] = self.seq(that).map(_._2)
+    final def *>[B](that: Program[B]): Program[B] = self.seq(that).map(_._2)
 
-    final def <* [B](that: Program[B]): Program[A] = self.seq(that).map(_._1)
+    final def <*[B](that: Program[B]): Program[A] = self.seq(that).map(_._1)
 
     final def map[B](f: A => B): Program[B] =
       flatMap(f andThen (Program.point(_)))
@@ -41,16 +41,13 @@ object zio_background {
     def point[A](a: => A): Program[A] = Return(() => a)
   }
 
-  import Program.{readLine, writeLine, point}
+  import Program.{ readLine, writeLine, point }
 
   val yourName1: Program[Unit] =
     writeLine("What is your name?").flatMap(_ =>
       readLine.flatMap(name =>
         writeLine("Hello, " + name + ", good to meet you!").map(_ =>
-          ()
-        )
-      )
-    )
+          ())))
 
   // Ignore me
   point(())
@@ -227,7 +224,7 @@ object zio_composition {
   //
   def ifThenElse[E, A](bool: IO[E, Boolean])(
     ifTrue: IO[E, A], ifFalse: IO[E, A]): IO[E, A] =
-      ???
+    ???
   val exampleIf = ifThenElse(IO.point(true))(IO.point("It's true!"), IO.point("It's false!"))
 
   //
@@ -252,9 +249,9 @@ object zio_composition {
     if (b < 0) Left(b)
     else {
       Right(b.toInt +
-      (read().toInt << 8) +
-      (read().toInt << 16) +
-      (read().toInt << 24))
+        (read().toInt << 8) +
+        (read().toInt << 16) +
+        (read().toInt << 24))
     }
   }
   def decode2[E](read: IO[E, Byte]): IO[E, Either[Byte, Int]] =
@@ -410,7 +407,7 @@ object zio_effects {
   import scala.io.StdIn.readLine
   import scala.io.Source
   import java.io.File
-  import java.util.concurrent.{Executors, TimeUnit}
+  import java.util.concurrent.{ Executors, TimeUnit }
 
   type ??? = Nothing
   implicit class FixMe[A](a: A) {
@@ -567,7 +564,6 @@ object zio_concurrency {
   val rightWork1: IO[Nothing, Int] = fibonacci(10)
   val par1: ??? = ???
 
-
   //
   // EXERCISE 4
   //
@@ -620,7 +616,7 @@ object zio_concurrency {
       fiber1 <- fibonacci(10).fork
       fiber2 <- fibonacci(20).fork
       both = (??? : Fiber[Nothing, Int])
-      _      <- both.interrupt
+      _ <- both.interrupt
     } yield ()
 
   //
@@ -652,7 +648,7 @@ object zio_concurrency {
 }
 
 object zio_resources {
-  import java.io.{File, FileInputStream}
+  import java.io.{ File, FileInputStream }
   class InputStream private (is: FileInputStream) {
     def read: IO[Exception, Option[Byte]] =
       IO.syncException(is.read).map(i => if (i < 0) None else Some(i.toByte))
@@ -691,8 +687,8 @@ object zio_resources {
 
     for {
       stream <- InputStream.openFile(file)
-      bytes  <- readAll(stream, Nil)
-      _      <- stream.close
+      bytes <- readAll(stream, Nil)
+      _ <- stream.close
     } yield bytes
   }
   def readFile2(file: File): IO[Exception, List[Byte]] = ???
@@ -702,11 +698,8 @@ object zio_resources {
   //
   // Implement the `tryCatchFinally` method using `bracket` or `ensuring`.
   //
-  def tryCatchFinally[E, A]
-    (try0: IO[E, A])
-    (catch0: PartialFunction[E, IO[E, A]])
-    (finally0: IO[Nothing, Unit]): IO[E, A] =
-      ???
+  def tryCatchFinally[E, A](try0: IO[E, A])(catch0: PartialFunction[E, IO[E, A]])(finally0: IO[Nothing, Unit]): IO[E, A] =
+    ???
 
   //
   // EXERCISE 4
@@ -714,7 +707,7 @@ object zio_resources {
   // Use the `bracket` method to rewrite the following snippet to ZIO.
   //
   def readFileTCF1(file: File): List[Byte] = {
-    var fis : FileInputStream = null
+    var fis: FileInputStream = null
 
     try {
       fis = new FileInputStream(file)
@@ -722,7 +715,7 @@ object zio_resources {
       fis.read(array)
       array.toList
     } catch {
-      case e : java.io.IOException => Nil
+      case e: java.io.IOException => Nil
     } finally if (fis != null) fis.close()
   }
   def readFileTCF2(file: File): IO[Exception, List[Byte]] =
@@ -865,20 +858,20 @@ object zio_interop {
     def work: Task[Unit] =
       for {
         c1 <- ref.get
-        _  <- putStrLn(s"#$number >> $c1")
+        _ <- putStrLn(s"#$number >> $c1")
         c2 <- ref.modify(x => (x + 1, x))
-        _  <- putStrLn(s"#$number >> $c2")
+        _ <- putStrLn(s"#$number >> $c2")
       } yield ()
   }
 
   val program: Task[Unit] =
     for {
       ref <- Ref.of[Task, Int](0)
-      w1  = new Worker(1, ref)
-      w2  = new Worker(2, ref)
-      w3  = new Worker(3, ref)
-      f   <- IO.forkAll(List(w1.work, w2.work, w3.work))
-      _   <- f.join
+      w1 = new Worker(1, ref)
+      w2 = new Worker(2, ref)
+      w3 = new Worker(3, ref)
+      f <- IO.forkAll(List(w1.work, w2.work, w3.work))
+      _ <- f.join
     } yield ()
 }
 
@@ -903,9 +896,9 @@ object zio_ref {
   //
   val incrementedBy10: IO[Nothing, Int] =
     for {
-      ref   <- makeZero
+      ref <- makeZero
       value <- (ref ? : IO[Nothing, Int])
-      _     <- (ref ? : IO[Nothing, Unit])
+      _ <- (ref ? : IO[Nothing, Unit])
       value <- (ref ? : IO[Nothing, Int])
     } yield value
 
@@ -917,7 +910,7 @@ object zio_ref {
   //
   val atomicallyIncrementedBy10: IO[Nothing, Int] =
     for {
-      ref   <- makeZero
+      ref <- makeZero
       value <- (ref ? : IO[Nothing, Int])
     } yield value
 
@@ -929,7 +922,7 @@ object zio_ref {
   //
   val atomicallyIncrementedBy10PlusGet: IO[Nothing, Int] =
     for {
-      ref   <- makeZero
+      ref <- makeZero
       value <- ref.modify(v => (???, v + 10))
     } yield value
 }
@@ -956,7 +949,7 @@ object zio_promise {
   //
   val completed1: IO[Nothing, Boolean] =
     for {
-      promise   <- makeIntPromise
+      promise <- makeIntPromise
       completed <- (promise ? : IO[Nothing, Boolean])
     } yield completed
 
@@ -968,7 +961,7 @@ object zio_promise {
   //
   val errored1: IO[Nothing, Boolean] =
     for {
-      promise   <- makeIntPromise
+      promise <- makeIntPromise
       completed <- (promise ? : IO[Nothing, Boolean])
     } yield completed
 
@@ -981,7 +974,7 @@ object zio_promise {
   //
   val errored2: IO[Nothing, Boolean] =
     for {
-      promise   <- Promise.make[Error, String]
+      promise <- Promise.make[Error, String]
       completed <- (promise ? : IO[Nothing, Boolean])
     } yield completed
 
@@ -994,7 +987,7 @@ object zio_promise {
   //
   val interrupted: IO[Nothing, Boolean] =
     for {
-      promise   <- Promise.make[Error, String]
+      promise <- Promise.make[Error, String]
       completed <- (promise ? : IO[Nothing, Boolean])
     } yield completed
 
@@ -1007,8 +1000,8 @@ object zio_promise {
   val handoff1: IO[Nothing, Int] =
     for {
       promise <- Promise.make[Nothing, Int]
-      _       <- (IO.sleep(10.millis) *> promise.complete(42)).fork
-      value   <- (promise ? : IO[Nothing, Int])
+      _ <- (IO.sleep(10.millis) *> promise.complete(42)).fork
+      value <- (promise ? : IO[Nothing, Int])
     } yield value
 
   //
@@ -1020,8 +1013,8 @@ object zio_promise {
   val handoff2: IO[Error, Int] =
     for {
       promise <- Promise.make[Error, Int]
-      _       <- promise.error(new Error("Uh oh!")).delay(10.milliseconds).fork
-      value   <- (promise ? : IO[Nothing, Int])
+      _ <- promise.error(new Error("Uh oh!")).delay(10.milliseconds).fork
+      value <- (promise ? : IO[Nothing, Int])
     } yield value
 
   //
@@ -1033,8 +1026,8 @@ object zio_promise {
   val handoff3: IO[Error, Int] =
     for {
       promise <- Promise.make[Error, Int]
-      _       <- promise.interrupt.delay(10.milliseconds).fork
-      value   <- (promise ? : IO[Nothing, Int])
+      _ <- promise.interrupt.delay(10.milliseconds).fork
+      value <- (promise ? : IO[Nothing, Int])
     } yield value
 }
 
@@ -1060,7 +1053,7 @@ object zio_queue {
   val offered1: IO[Nothing, Unit] =
     for {
       queue <- makeQueue
-      _     <- (queue ? : IO[Nothing, Unit])
+      _ <- (queue ? : IO[Nothing, Unit])
     } yield ()
 
   //
@@ -1071,7 +1064,7 @@ object zio_queue {
   val taken1: IO[Nothing, Int] =
     for {
       queue <- makeQueue
-      _     <- queue.offer(42)
+      _ <- queue.offer(42)
       value <- (queue ? : IO[Nothing, Int])
     } yield value
 
@@ -1084,9 +1077,9 @@ object zio_queue {
   val offeredTaken1: IO[Nothing, (Int, Int)] =
     for {
       queue <- makeQueue
-      _     <- (??? : IO[Nothing, Unit]).fork
-      v1    <- (queue ? : IO[Nothing, Int])
-      v2    <- (queue ? : IO[Nothing, Int])
+      _ <- (??? : IO[Nothing, Unit]).fork
+      v1 <- (queue ? : IO[Nothing, Int])
+      v2 <- (queue ? : IO[Nothing, Int])
     } yield (v1, v2)
 
   //
@@ -1098,9 +1091,9 @@ object zio_queue {
   val infiniteReader1: IO[Nothing, List[Int]] =
     for {
       queue <- makeQueue
-      _     <- (??? : IO[Nothing, Nothing]).fork
-      vs    <- (queue ? : IO[Nothing, Int])
-    } yield vs
+      _ <- (??? : IO[Nothing, Nothing]).fork
+      vs <- (queue ? : IO[Nothing, Int])
+    } yield ???
 
   //
   // EXERCISE 6
@@ -1112,9 +1105,9 @@ object zio_queue {
   case class Increment(amount: Int) extends Message
   val makeCounter: IO[Nothing, Message => IO[Nothing, Int]] =
     for {
-      counter  <- Ref(0)
-      mailbox  <- Queue.bounded[(Message, Promise[Nothing, Int])](100)
-      _        <- (mailbox.take ? : IO[Nothing, Fiber[Nothing, Nothing]])
+      counter <- Ref(0)
+      mailbox <- Queue.bounded[(Message, Promise[Nothing, Int])](100)
+      _ <- (mailbox.take ? : IO[Nothing, Fiber[Nothing, Nothing]])
     } yield { (message: Message) =>
       ???
     }
@@ -1122,8 +1115,8 @@ object zio_queue {
   val counterExample: IO[Nothing, Int] =
     for {
       counter <- makeCounter
-      _       <- IO.parAll(List.fill(100)(IO.traverse((0 to 100).map(Increment(_)))(counter)))
-      value   <- counter(Increment(0))
+      _ <- IO.parAll(List.fill(100)(IO.traverse((0 to 100).map(Increment(_)))(counter)))
+      value <- counter(Increment(0))
     } yield value
 }
 
